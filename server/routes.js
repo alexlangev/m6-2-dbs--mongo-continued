@@ -1,5 +1,16 @@
 const router = require("express").Router();
 
+//MongoDB stuff
+require('dotenv').config();
+const { MongoClient } = require('mongodb');
+const assert = require('assert');
+const { MONGO_URI } = process.env;
+const options = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+};
+
+//Seats constants
 const NUM_OF_ROWS = 8;
 const SEATS_PER_ROW = 12;
 
@@ -15,6 +26,18 @@ for (let r = 0; r < row.length; r++) {
     };
   }
 }
+// console.log("Seats:", seats);
+
+//Seats as an array
+const seatsArr = [];
+Object.keys(seats).forEach((seat) => {
+  seatsArr.push({
+    _id: seat,
+    ...seats[seat],
+  })
+})
+// console.log("seatsArr:", seatsArr);
+
 // ----------------------------------
 //////// HELPERS
 const getRowName = (rowIndex) => {
@@ -99,5 +122,27 @@ router.post("/api/book-seat", async (req, res) => {
     success: true,
   });
 });
+
+const seatImport = async () => {
+  const client = await MongoClient(MONGO_URI, options);
+  try {
+    
+    await client.connect();
+
+    const db = client.db('seats-db');
+    console.log('connected');
+
+    const r = await db.collection('seats').insertMany(seatsArr);
+    assert.equal(seats.length, r.insertedCount);
+    console.log('succes');
+  } catch (err) {
+    console.log(err.stack);
+  }
+  client.close();
+  console.log('disconnected');
+};
+
+seatImport();
+
 
 module.exports = router;
