@@ -1,5 +1,7 @@
 const router = require("express").Router();
 
+const {getSeats} = require('./handlers');
+
 //MongoDB stuff
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
@@ -16,26 +18,26 @@ const SEATS_PER_ROW = 12;
 
 // Code that is generating the seats.
 // ----------------------------------
-const seats = {};
-const row = ["A", "B", "C", "D", "E", "F", "G", "H"];
-for (let r = 0; r < row.length; r++) {
-  for (let s = 1; s < 13; s++) {
-    seats[`${row[r]}-${s}`] = {
-      price: 225,
-      isBooked: false,
-    };
-  }
-}
+// const seats = {};
+// const row = ["A", "B", "C", "D", "E", "F", "G", "H"];
+// for (let r = 0; r < row.length; r++) {
+//   for (let s = 1; s < 13; s++) {
+//     seats[`${row[r]}-${s}`] = {
+//       price: 225,
+//       isBooked: false,
+//     };
+//   }
+// }
 // console.log("Seats:", seats);
 
 //Seats as an array
-const seatsArr = [];
-Object.keys(seats).forEach((seat) => {
-  seatsArr.push({
-    _id: seat,
-    ...seats[seat],
-  })
-})
+// const seatsArr = [];
+// Object.keys(seats).forEach((seat) => {
+//   seatsArr.push({
+//     _id: seat,
+//     ...seats[seat],
+//   })
+// })
 // console.log("seatsArr:", seatsArr);
 
 // ----------------------------------
@@ -63,20 +65,7 @@ const randomlyBookSeats = (num) => {
 
 let state;
 
-router.get("/api/seat-availability", async (req, res) => {
-  if (!state) {
-    state = {
-      bookedSeats: randomlyBookSeats(30),
-    };
-  }
-
-  return res.json({
-    seats: seats,
-    bookedSeats: state.bookedSeats,
-    numOfRows: 8,
-    seatsPerRow: 12,
-  });
-});
+router.get("/api/seat-availability", getSeats);
 
 let lastBookingAttemptSucceeded = false;
 
@@ -123,26 +112,26 @@ router.post("/api/book-seat", async (req, res) => {
   });
 });
 
-const seatImport = async () => {
-  const client = await MongoClient(MONGO_URI, options);
-  try {
+// const seatImport = async () => {
+//   const client = await MongoClient(MONGO_URI, options);
+//   try {
     
-    await client.connect();
+//     await client.connect();
 
-    const db = client.db('seats-db');
-    console.log('connected');
+//     const db = client.db('seats-db');
+//     console.log('connected');
 
-    const r = await db.collection('seats').insertMany(seatsArr);
-    assert.equal(seats.length, r.insertedCount);
-    console.log('succes');
-  } catch (err) {
-    console.log(err.stack);
-  }
-  client.close();
-  console.log('disconnected');
-};
+//     const r = await db.collection('seats').insertMany(seatsArr);
+//     assert.equal(seats.length, r.insertedCount);
+//     console.log('succes');
+//   } catch (err) {
+//     console.log(err.stack);
+//   }
+//   client.close();
+//   console.log('disconnected');
+// };
 
-seatImport();
+// seatImport();
 
 
 module.exports = router;
